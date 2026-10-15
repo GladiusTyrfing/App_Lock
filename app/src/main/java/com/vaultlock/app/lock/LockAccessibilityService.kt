@@ -2,7 +2,6 @@ package com.vaultlock.app.lock
 
 import android.accessibilityservice.AccessibilityService
 import android.content.ComponentName
-import android.content.pm.PackageManager
 import android.view.accessibility.AccessibilityEvent
 
 class LockAccessibilityService : AccessibilityService() {
@@ -29,9 +28,7 @@ class LockAccessibilityService : AccessibilityService() {
         val result = try {
             packageManager.getActivityInfo(ComponentName(packageName, className), 0)
             true
-        } catch (_: PackageManager.NameNotFoundException) {
-            false
-        } catch (_: Exception) {
+        } catch (e: Exception) {
             false
         }
         if (activityCache.size > 500) activityCache.clear()
