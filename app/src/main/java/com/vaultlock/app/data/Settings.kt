@@ -110,11 +110,16 @@ class SettingsStore(context: Context, private val scope: CoroutineScope) {
     val current: AppSettings
         get() = state.value
 
-    suspend fun edit(transform: (AppSettings) -> AppSettings) {
+    suspend fun edit(transform: (AppSettings) -> AppSettings): AppSettings {
+        var result = current
         store.edit { prefs ->
-            transform(prefs.toSettings()).writeTo(prefs)
+            result = transform(prefs.toSettings())
+            result.writeTo(prefs)
         }
+        return result
     }
+
+    suspend fun fresh(): AppSettings = flow.first()
 
     fun update(transform: (AppSettings) -> AppSettings) {
         scope.launch { edit(transform) }

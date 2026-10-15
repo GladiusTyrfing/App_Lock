@@ -14,6 +14,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import com.vaultlock.app.app
+import com.vaultlock.app.data.AppSettings
 import com.vaultlock.app.util.Permissions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -75,7 +76,8 @@ class MonitorService : LifecycleService() {
         lifecycleScope.launch {
             app.settings.state.collect { settings ->
                 if (!settings.protectionEnabled || !settings.setupComplete) {
-                    stopSelf()
+                    val fresh = app.settings.fresh()
+                    if (!fresh.protectionEnabled || !fresh.setupComplete) stopSelf()
                 } else {
                     startInForeground(settings.lockedApps.size)
                 }
@@ -139,8 +141,7 @@ class MonitorService : LifecycleService() {
     }
 
     companion object {
-        fun sync(context: Context) {
-            val settings = context.app.settings.current
+        fun sync(context: Context, settings: AppSettings = context.app.settings.current) {
             val intent = Intent(context, MonitorService::class.java)
             if (settings.setupComplete && settings.protectionEnabled) {
                 runCatching { ContextCompat.startForegroundService(context, intent) }

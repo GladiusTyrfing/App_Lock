@@ -8,6 +8,7 @@ import android.service.quicksettings.Tile
 import android.service.quicksettings.TileService
 import com.vaultlock.app.app
 import com.vaultlock.app.ui.MainActivity
+import kotlinx.coroutines.launch
 
 class ProtectionTileService : TileService() {
 
@@ -26,12 +27,14 @@ class ProtectionTileService : TileService() {
         if (settings.protectionEnabled) {
             if (isLocked) unlockAndRun { openApp() } else openApp()
         } else {
-            app.settings.update { it.copy(protectionEnabled = true) }
+            app.scope.launch {
+                val updated = app.settings.edit { it.copy(protectionEnabled = true) }
+                MonitorService.sync(applicationContext, updated)
+            }
             qsTile?.apply {
                 state = Tile.STATE_ACTIVE
                 updateTile()
             }
-            MonitorService.sync(applicationContext)
         }
     }
 
