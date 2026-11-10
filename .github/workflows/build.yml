@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -39,3 +41,13 @@ jobs:
           path: |
             app/build/outputs/apk/debug/*.apk
             app/build/outputs/apk/release/*.apk
+      # Publish the debug APK to a fixed public link that can be opened straight from a phone:
+      # https://github.com/<owner>/<repo>/releases/download/latest/VaultLock.apk
+      - name: Publish APK
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk VaultLock.apk
+          gh release delete latest --yes --cleanup-tag || true
+          gh release create latest VaultLock.apk             --target "$GITHUB_SHA"             --title "VaultLock (latest build)"             --notes "Debug build of ${GITHUB_SHA::7} from ${GITHUB_REF_NAME}. Download VaultLock.apk below and install it on your phone."
