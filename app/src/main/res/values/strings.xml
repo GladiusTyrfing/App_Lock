@@ -9,4 +9,5 @@
     <string name="accessibility_label">VaultLock app protection</string>
     <string name="accessibility_summary">Shows the VaultLock lock screen the moment a protected app is opened.</string>
     <string name="accessibility_description">VaultLock uses this service only to detect which app has just been opened, so it can cover protected apps with the lock screen instantly. It does not read, collect or share any screen content, text you type or personal data.</string>
+    <string name="notification_guard_label">VaultLock notification hiding</string>
 </resources>

@@ -59,6 +59,8 @@ data class AppSettings(
     val blockScreenshots: Boolean = true,
     val deleteOriginals: Boolean = false,
     val intrudersSeenAt: Long = 0L,
+    val hiddenNotificationApps: Set<String> = emptySet(),
+    val hideNotificationAppName: Boolean = false,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -95,6 +97,8 @@ class SettingsStore(context: Context, private val scope: CoroutineScope) {
         val blockScreenshots = booleanPreferencesKey("block_screenshots")
         val deleteOriginals = booleanPreferencesKey("delete_originals")
         val intrudersSeenAt = longPreferencesKey("intruders_seen_at")
+        val hiddenNotificationApps = stringSetPreferencesKey("hidden_notification_apps")
+        val hideNotificationAppName = booleanPreferencesKey("hide_notification_app_name")
     }
 
     private val flow: Flow<AppSettings> = store.data
@@ -158,6 +162,8 @@ class SettingsStore(context: Context, private val scope: CoroutineScope) {
             blockScreenshots = this[Keys.blockScreenshots] ?: d.blockScreenshots,
             deleteOriginals = this[Keys.deleteOriginals] ?: d.deleteOriginals,
             intrudersSeenAt = this[Keys.intrudersSeenAt] ?: d.intrudersSeenAt,
+            hiddenNotificationApps = this[Keys.hiddenNotificationApps] ?: d.hiddenNotificationApps,
+            hideNotificationAppName = this[Keys.hideNotificationAppName] ?: d.hideNotificationAppName,
         )
     }
 
@@ -189,5 +195,7 @@ class SettingsStore(context: Context, private val scope: CoroutineScope) {
         prefs[Keys.blockScreenshots] = blockScreenshots
         prefs[Keys.deleteOriginals] = deleteOriginals
         prefs[Keys.intrudersSeenAt] = intrudersSeenAt
+        prefs[Keys.hiddenNotificationApps] = hiddenNotificationApps
+        prefs[Keys.hideNotificationAppName] = hideNotificationAppName
     }
 }

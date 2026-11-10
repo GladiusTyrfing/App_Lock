@@ -12,13 +12,17 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.vaultlock.app.R
+import com.vaultlock.app.app
 import com.vaultlock.app.ui.MainActivity
 
 object Notifications {
 
     const val CHANNEL_PROTECTION = "protection"
     const val CHANNEL_ALERTS = "alerts"
+    const val CHANNEL_HIDDEN = "hidden"
     const val ID_SERVICE = 1001
+    const val ID_HIDDEN = 1002
+    const val TAG_HIDDEN_PREFIX = "hidden:"
 
     fun createChannels(context: Context) {
         val manager = context.getSystemService(NotificationManager::class.java)
@@ -31,6 +35,12 @@ object Notifications {
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_ALERTS, "Alerts", NotificationManager.IMPORTANCE_DEFAULT).apply {
                 description = "New app suggestions and security alerts"
+            },
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL_HIDDEN, "Hidden notifications", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "Stand-ins for notifications from apps whose content you chose to hide"
+                lockscreenVisibility = Notification.VISIBILITY_PUBLIC
             },
         )
     }
@@ -58,6 +68,27 @@ object Notifications {
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
             .setContentIntent(openApp(context))
             .build()
+
+    /** Replaces the hidden notifications of [packageName] with a single one that shows no content. */
+    fun hidden(context: Context, packageName: String, label: String, count: Int, hideName: Boolean, contentIntent: PendingIntent?) {
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&
+            android.os.Build.VERSION.SDK_INT >= 33
+        ) return
+        val tap = contentIntent ?: context.packageManager.getLaunchIntentForPackage(packageName)?.let {
+            PendingIntent.getActivity(context, packageName.hashCode(), it, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        }
+        val builder = NotificationCompat.Builder(context, CHANNEL_HIDDEN)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setContentTitle(if (hideName) "New notification" else label)
+            .setContentText(if (count == 1) "1 new notification" else "$count new notifications")
+            .setNumber(count)
+            .setAutoCancel(true)
+            .setOnlyAlertOnce(true)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setContentIntent(tap)
+        if (!hideName) context.app.apps.icon(packageName)?.let { builder.setLargeIcon(it) }
+        runCatching { NotificationManagerCompat.from(context).notify(TAG_HIDDEN_PREFIX + packageName, ID_HIDDEN, builder.build()) }
+    }
 
     fun newApp(context: Context, packageName: String, label: String) {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED &&

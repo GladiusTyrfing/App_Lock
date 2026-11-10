@@ -1,5 +1,6 @@
 package com.vaultlock.app.lock
 
+import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
 import android.os.SystemClock
@@ -69,10 +70,13 @@ object LockEngine {
     }
 
     private fun evaluate(context: Context, packageName: String, settings: AppSettings) {
-        if (!settings.setupComplete || !settings.protectionEnabled) return
-        if (!isProtected(packageName, settings)) return
+        if (!settings.setupComplete || !settings.protectionEnabled || !isProtected(packageName, settings)) {
+            LockCover.hide()
+            return
+        }
         if (isSessionValid(packageName)) {
             sessions[packageName] = ACTIVE
+            LockCover.hide()
             return
         }
         sessions.remove(packageName)
@@ -100,6 +104,7 @@ object LockEngine {
         if (lastLaunchPackage == packageName && now - lastLaunchAt < 700) return
         lastLaunchPackage = packageName
         lastLaunchAt = now
+        LockCover.show(context)
         val intent = Intent(context, LockActivity::class.java)
             .putExtra(LockActivity.EXTRA_PACKAGE, packageName)
             .addFlags(
@@ -108,7 +113,7 @@ object LockEngine {
                     Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS or
                     Intent.FLAG_ACTIVITY_REORDER_TO_FRONT,
             )
-        runCatching { context.startActivity(intent) }
+        if (runCatching { context.startActivity(intent) }.isFailure) LockCover.hide()
     }
 
     fun onUnlocked(packageName: String) {
@@ -119,6 +124,9 @@ object LockEngine {
 
     fun onLockDismissed(packageName: String) {
         if (currentPackage == packageName) currentPackage = null
+        if (lockScreenPackage == packageName) lockScreenPackage = null
+        lastLaunchPackage = null
+        LockCover.hide()
     }
 
     fun onScreenOff() {
@@ -128,6 +136,9 @@ object LockEngine {
     }
 
     fun onScreenOn(context: Context) {
+        // Wait for ACTION_USER_PRESENT while the keyguard is up, otherwise the lock would be
+        // started (and immediately stopped) behind the keyguard.
+        if (context.getSystemService(KeyguardManager::class.java)?.isKeyguardLocked == true) return
         val packageName = currentPackage ?: return
         evaluate(context, packageName, context.app.settings.current)
     }

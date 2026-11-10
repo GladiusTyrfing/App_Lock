@@ -46,6 +46,7 @@ object Routes {
     const val PERMISSIONS = "permissions"
     const val LOCK_SETUP = "lock_setup"
     const val RECOVERY = "recovery"
+    const val NOTIFICATIONS = "notifications"
 
     fun viewer(id: String) = "viewer/$id"
     fun note(id: String?) = "note/${id ?: "new"}"
@@ -131,11 +132,13 @@ fun MainScaffold(settings: AppSettings) {
                     onOpenPermissions = { nav.navigate(Routes.PERMISSIONS) },
                     onChangeLock = { nav.navigate(Routes.LOCK_SETUP) },
                     onNewRecovery = { nav.navigate(Routes.RECOVERY) },
+                    onOpenNotifications = { nav.navigate(Routes.NOTIFICATIONS) },
                 )
             }
             composable(Routes.PERMISSIONS) { PermissionsScreen(onBack = { nav.popBackStack() }) }
             composable(Routes.LOCK_SETUP) { ChangeLockScreen(onDone = { nav.popBackStack() }) }
             composable(Routes.RECOVERY) { NewRecoveryScreen(onDone = { nav.popBackStack() }) }
+            composable(Routes.NOTIFICATIONS) { HiddenNotificationsScreen(settings = settings, onBack = { nav.popBackStack() }) }
             composable(Routes.VIEWER, arguments = listOf(navArgument("id") { type = NavType.StringType })) { back ->
                 ViewerScreen(id = back.arguments?.getString("id").orEmpty(), onBack = { nav.popBackStack() })
             }

@@ -11,6 +11,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import com.vaultlock.app.lock.LockAccessibilityService
 
@@ -34,6 +35,11 @@ object Permissions {
     }
 
     fun canDrawOverlays(context: Context): Boolean = Settings.canDrawOverlays(context)
+
+    fun hasNotificationAccess(context: Context): Boolean =
+        NotificationManagerCompat.getEnabledListenerPackages(context).contains(context.packageName)
+
+    fun notificationAccessIntent(): Intent = Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)
 
     fun hasNotifications(context: Context): Boolean =
         Build.VERSION.SDK_INT < 33 ||

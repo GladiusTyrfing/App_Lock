@@ -28,6 +28,7 @@ import androidx.compose.material.icons.rounded.Fingerprint
 import androidx.compose.material.icons.rounded.Info
 import androidx.compose.material.icons.rounded.Key
 import androidx.compose.material.icons.rounded.NewReleases
+import androidx.compose.material.icons.rounded.NotificationsOff
 import androidx.compose.material.icons.rounded.Palette
 import androidx.compose.material.icons.rounded.Password
 import androidx.compose.material.icons.rounded.Screenshot
@@ -92,6 +93,7 @@ fun SettingsScreen(
     onOpenPermissions: () -> Unit,
     onChangeLock: () -> Unit,
     onNewRecovery: () -> Unit,
+    onOpenNotifications: () -> Unit,
 ) {
     val context = LocalContext.current
     val store = context.app.settings
@@ -225,6 +227,18 @@ fun SettingsScreen(
                         subtitle = "Currently shown as ${Disguises.label(settings.disguise)}",
                         tint = MaterialTheme.colorScheme.tertiary,
                         onClick = { dialog = SettingsDialog.DISGUISE },
+                    )
+                    SettingRow(
+                        icon = Icons.Rounded.NotificationsOff,
+                        title = "Hide notifications",
+                        subtitle = when (val count = settings.hiddenNotificationApps.size) {
+                            0 -> "Hide the content of notifications from apps you choose"
+                            1 -> "Hiding notifications from 1 app"
+                            else -> "Hiding notifications from $count apps"
+                        },
+                        tint = MaterialTheme.colorScheme.tertiary,
+                        onClick = onOpenNotifications,
+                        trailing = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null) },
                     )
                     SwitchRow(
                         icon = Icons.Rounded.Screenshot,

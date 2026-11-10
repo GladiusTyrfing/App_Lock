@@ -138,6 +138,10 @@ class LockActivity : FragmentActivity() {
     override fun onResume() {
         super.onResume()
         LockEngine.lockScreenPackage = target
+        LockCover.hideAfterDraw(window.decorView)
+        // Starting a foreground service is only allowed while we are visible, so use this moment
+        // to bring the monitor back if the system killed it in the background.
+        MonitorService.sync(this)
         promptBiometric()
     }
 
@@ -172,7 +176,10 @@ class LockActivity : FragmentActivity() {
 
     override fun onStop() {
         super.onStop()
-        if (!unlocked && !isChangingConfigurations && !isFinishing) finish()
+        if (!unlocked && !isChangingConfigurations) {
+            LockEngine.onLockDismissed(target)
+            if (!isFinishing) finish()
+        }
     }
 
     override fun onDestroy() {
