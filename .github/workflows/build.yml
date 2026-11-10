@@ -16,9 +16,23 @@ jobs:
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
       - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+        run: |
+          set -o pipefail
+          if ! ./gradlew --no-daemon assembleDebug 2>&1 | tee build.log; then
+            # Surface compiler errors as annotations, which are readable without signing in.
+            msg=$(grep -E '^e: |error:|What went wrong' -A2 build.log | head -40 | awk '{gsub(/%/,"%25"); printf "%s%%0A", $0}')
+            echo "::error title=assembleDebug failed::$msg"
+            exit 1
+          fi
       - name: Build release APK
-        run: ./gradlew --no-daemon assembleRelease
+        run: |
+          set -o pipefail
+          if ! ./gradlew --no-daemon assembleRelease 2>&1 | tee build.log; then
+            # Surface compiler errors as annotations, which are readable without signing in.
+            msg=$(grep -E '^e: |error:|What went wrong' -A2 build.log | head -40 | awk '{gsub(/%/,"%25"); printf "%s%%0A", $0}')
+            echo "::error title=assembleRelease failed::$msg"
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: VaultLock-apks
