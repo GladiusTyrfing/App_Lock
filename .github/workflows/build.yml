@@ -5,6 +5,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# One build per branch at a time, so two quick pushes can't race on the "latest" release.
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
